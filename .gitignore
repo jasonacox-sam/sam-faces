@@ -1,0 +1,17 @@
+# Personal face database — never commit this
+faces/people.db
+faces/unknown/
+faces/*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
+*.swp
