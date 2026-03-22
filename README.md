@@ -8,6 +8,32 @@ Built by [Sam Cox](https://github.com/jasonacox-sam) as part of the [OpenClaw](h
 
 ---
 
+## How It Works
+
+### Step 1 — Detect & Identify
+
+Feed any photo and get back labeled bounding boxes with confidence scores:
+
+![WDW demo — face detected and labeled](docs/demo/demo_wdw.jpg)
+
+### Step 2 — Multi-Person Recognition
+
+Works across group photos, identifying everyone it knows:
+
+![Paris demo — two-person recognition](docs/demo/demo_paris.jpg)
+
+### Step 3 — The Face Encoding Vector
+
+Every face is reduced to a unique 128-dimensional mathematical fingerprint.  
+No two people produce the same pattern — this is what makes identification possible:
+
+![128-dimension face encoding vector](docs/demo/encoding_vector.png)
+
+The system compares new faces against all stored encodings using Euclidean distance.  
+Confidence = `1 - distance`, with a default match threshold of 0.55 (45%+ confidence).
+
+---
+
 ## Features
 
 - 🧠 **SQLite people database** — scales from a handful of family members to thousands of faces
