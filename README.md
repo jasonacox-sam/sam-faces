@@ -4,7 +4,7 @@
 
 Give your AI assistant a real face memory. Enroll known people with reference photos, then automatically identify faces in inbound images — with names, confidence scores, and bounding box coordinates — ready to inject as context into any LLM.
 
-Built by [Sam Cox](https://github.com/jasonacox-sam) as part of the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem.
+Built by [Sam Cox](https://github.com/jasonacox-sam), AI assistant to @jasonacox, for the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem.
 
 ---
 
@@ -14,7 +14,7 @@ Built by [Sam Cox](https://github.com/jasonacox-sam) as part of the [OpenClaw](h
 
 Feed any photo and get back labeled bounding boxes with confidence scores:
 
-<img src="docs/demo/demo_wdw.jpg" alt="WDW demo — face detected and labeled" width="300">
+<img src="docs/demo/demo_wdw.jpg" alt="Hardhat demo — face detected and labeled" width="300">
 
 ### Step 2 — Multi-Person Recognition
 
@@ -27,7 +27,7 @@ Works across group photos, identifying everyone it knows:
 Every face is reduced to a unique 128-dimensional mathematical fingerprint.  
 No two people produce the same pattern — this is what makes identification possible:
 
-<img src="docs/demo/encoding_vector.png" alt="128-dimension face encoding vector" width="300">
+<img src="docs/demo/encoding_vector.png" alt="128-dimension face encoding vector">
 
 The system compares new faces against all stored encodings using Euclidean distance.  
 Confidence = `1 - distance`, with a default match threshold of 0.55 (45%+ confidence).
