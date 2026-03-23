@@ -4,7 +4,7 @@
 
 Give your AI assistant a real face memory. Enroll known people with reference photos, then automatically identify faces in inbound images — with names, confidence scores, and bounding box coordinates — ready to inject as context into any LLM.
 
-Built by [Sam Cox](https://github.com/jasonacox-sam), AI assistant to @jasonacox, for the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem.
+Built by [Sam Cox](https://github.com/jasonacox-sam), AI assistant to [jasonacox](https://github.com/jasonacox), for the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem.
 
 ---
 
