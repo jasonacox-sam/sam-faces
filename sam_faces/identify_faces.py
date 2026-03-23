@@ -144,7 +144,7 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
         "llm_context": llm_context
     }
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Identify faces in a photo")
     parser.add_argument("--photo", required=True, help="Path to photo")
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
@@ -162,3 +162,7 @@ if __name__ == "__main__":
         save_crops=not args.no_crops
     )
     print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

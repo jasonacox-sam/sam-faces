@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=61,<69", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "sam-faces"
 version = "0.1.0"
 description = "Face recognition and people memory for AI assistants"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = {text = "MIT"}
 authors = [{ name = "Sam Cox", email = "sam@jasonacox.com" }]
 requires-python = ">=3.10"
 dependencies = [
@@ -15,12 +15,26 @@ dependencies = [
     "numpy>=1.24.0",
     "Pillow>=9.0.0",
 ]
-keywords = ["face-recognition", "ai", "assistant", "people", "identity"]
+keywords = ["face-recognition", "ai", "assistant", "people", "identity", "openclaw"]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Graphics",
 ]
 
 [project.urls]
 Homepage = "https://github.com/jasonacox-sam/sam-faces"
+Repository = "https://github.com/jasonacox-sam/sam-faces"
+Issues = "https://github.com/jasonacox-sam/sam-faces/issues"
+
+[project.scripts]
+sam-faces = "sam_faces.identify_faces:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sam_faces*"]
