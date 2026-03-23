@@ -27,7 +27,7 @@ Works across group photos, identifying everyone it knows:
 Every face is reduced to a unique 128-dimensional mathematical fingerprint.  
 No two people produce the same pattern — this is what makes identification possible:
 
-<img src="docs/demo/encoding_vector.png" alt="128-dimension face encoding vector">
+<img src="docs/demo/encoding_vector.png" alt="128-dimensional face encoding vector">
 
 The system compares new faces against all stored encodings using Euclidean distance.  
 Confidence = `1 - distance`, with a default match threshold of 0.55 (45%+ confidence).
