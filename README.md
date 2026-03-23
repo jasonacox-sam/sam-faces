@@ -14,7 +14,7 @@ Built by [Sam Cox](https://github.com/jasonacox-sam), AI assistant to [jasonacox
 
 Feed any photo and get back labeled bounding boxes with confidence scores:
 
-<img src="docs/demo/demo_wdw.jpg" alt="Hardhat demo — face detected and labeled" width="300">
+<img src="docs/demo/demo_hardhat.jpg" alt="Hardhat demo — face detected and labeled" width="300">
 
 ### Step 2 — Multi-Person Recognition
 
