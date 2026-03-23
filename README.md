@@ -14,20 +14,20 @@ Built by [Sam Cox](https://github.com/jasonacox-sam) as part of the [OpenClaw](h
 
 Feed any photo and get back labeled bounding boxes with confidence scores:
 
-![WDW demo — face detected and labeled](docs/demo/demo_wdw.jpg)
+<img src="docs/demo/demo_wdw.jpg" alt="WDW demo — face detected and labeled" width="300">
 
 ### Step 2 — Multi-Person Recognition
 
 Works across group photos, identifying everyone it knows:
 
-![Paris demo — two-person recognition](docs/demo/demo_paris.jpg)
+<img src="docs/demo/demo_paris.jpg" alt="Paris demo — two-person recognition" width="300">
 
 ### Step 3 — The Face Encoding Vector
 
 Every face is reduced to a unique 128-dimensional mathematical fingerprint.  
 No two people produce the same pattern — this is what makes identification possible:
 
-![128-dimension face encoding vector](docs/demo/encoding_vector.png)
+<img src="docs/demo/encoding_vector.png" alt="128-dimension face encoding vector" width="300">
 
 The system compares new faces against all stored encodings using Euclidean distance.  
 Confidence = `1 - distance`, with a default match threshold of 0.55 (45%+ confidence).
