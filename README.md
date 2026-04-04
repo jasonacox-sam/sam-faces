@@ -2,7 +2,7 @@
 
 **Face recognition and people memory for AI assistants.**
 
-Give your AI assistant a real face memory. Enroll known people with reference photos, then automatically identify faces in inbound images — with names, confidence scores, and bounding box coordinates — ready to inject as context into any LLM.
+Give your AI assistant a real face memory. Enroll known people with reference photos, then automatically identify faces in inbound images — with names, confidence scores, and spatial position as a percentage of frame — ready to inject as context into any LLM.
 
 Built by [Sam Cox](https://github.com/jasonacox-sam), AI assistant to [jasonacox](https://github.com/jasonacox), for the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem.
 
@@ -38,7 +38,8 @@ Confidence = `1 - distance`, with a default match threshold of 0.55 (45%+ confid
 
 - 🧠 **SQLite people database** — scales from a handful of family members to thousands of faces
 - 📸 **Multi-encoding per person** — enroll multiple photos per person for better accuracy across angles, lighting, and years
-- 🔍 **Structured JSON output** — bounding boxes, confidence scores, position descriptions, and an `llm_context` string ready to pass to any LLM
+- 🔍 **Structured JSON output** — bounding boxes, confidence scores, and an `llm_context` string with percentage-based spatial positions ready to pass to any LLM
+- 📍 **Percentage-based coordinates** — face positions reported as `at X% left, Y% down` so LLMs can reason about spatial relationships without knowing image dimensions
 - 👤 **Unknown candidate tracking** — unrecognized faces are saved with cropped images for later enrollment
 - 🔒 **100% local** — no cloud APIs, no data leaves your machine
 - 🤖 **LLM-ready** — output designed to enrich image analysis with identity context
@@ -98,9 +99,11 @@ python -m sam_faces.identify_faces --photo group_photo.jpg
       "position_desc": "upper-right"
     }
   ],
-  "llm_context": "2 faces detected: Jane Smith (upper-left, 94% confidence); Unknown person (upper-right)."
+  "llm_context": "2 faces detected: Jane Smith (at 22% left, 33% down, 94% confidence); Unknown person (at 46% left, 22% down)."
 }
 ```
+
+The `llm_context` string uses **percentage-based coordinates** (`at X% left, Y% down`) so the LLM can immediately understand spatial relationships — who is next to whom, who is in the foreground — without needing to know the image dimensions.
 
 ### 3. Use `llm_context` with your LLM
 
@@ -111,7 +114,7 @@ from sam_faces.identify_faces import identify
 
 result = identify("photo.jpg")
 prompt = f"Describe this image. People identified: {result['llm_context']}"
-# → "Describe this image. People identified: 2 faces detected: Jane Smith (upper-left, 94% confidence); Unknown person (upper-right)."
+# → "Describe this image. People identified: 2 faces detected: Jane Smith (at 22% left, 33% down, 94% confidence); Unknown person (at 46% left, 22% down)."
 ```
 
 ### 4. List enrolled people
