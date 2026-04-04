@@ -10,14 +10,14 @@ Schema:
                      resolved_as TEXT)
 """
 
-import os
 import sqlite3
 import numpy as np
+import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(os.environ.get("SAM_FACES_DB", Path(__file__).parent.parent / "faces" / "people.db"))
+DB_PATH = Path(__file__).parent.parent / "faces" / "people.db"
 
 # ── Connection ─────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ def init_db():
                 resolved_as    TEXT
             );
         """)
-    print(f"✅ Database ready: {DB_PATH}")
+    print(f"✅ Database ready: {DB_PATH}", file=__import__('sys').stderr)
 
 # ── Encoding helpers ────────────────────────────────────────────────────────
 
@@ -99,12 +99,12 @@ def list_people() -> list[dict]:
 
 # ── Encodings ───────────────────────────────────────────────────────────────
 
-def add_encoding(person_id: str, encoding: np.ndarray, note: str = "") -> str:
+def add_encoding(person_id: str, encoding: np.ndarray, note: str = "", crop_path: str = "") -> str:
     eid = str(uuid.uuid4())[:12]
     with get_conn() as conn:
         conn.execute(
-            "INSERT INTO encodings (id, person_id, vector, note, added_at) VALUES (?, ?, ?, ?, ?)",
-            (eid, person_id, vec_to_blob(encoding), note, datetime.now(timezone.utc).isoformat())
+            "INSERT INTO encodings (id, person_id, vector, note, added_at, crop_path) VALUES (?, ?, ?, ?, ?, ?)",
+            (eid, person_id, vec_to_blob(encoding), note, datetime.now(timezone.utc).isoformat(), crop_path)
         )
     return eid
 
