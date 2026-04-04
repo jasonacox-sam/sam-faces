@@ -130,11 +130,15 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
     # Build LLM context string
     parts = []
     for f in faces:
+        cx, cy = f["center"]
+        px = round(cx / img_w * 100)
+        py = round(cy / img_h * 100)
+        coord = f"at {px}% left, {py}% down"
         if f["unknown"]:
-            parts.append(f"Unknown person ({f['position_desc']})")
+            parts.append(f"Unknown person ({coord})")
         else:
             pct = int(f["confidence"] * 100)
-            parts.append(f"{f['name']} ({f['position_desc']}, {pct}% confidence)")
+            parts.append(f"{f['name']} ({coord}, {pct}% confidence)")
 
     llm_context = f"{len(faces)} face{'s' if len(faces) != 1 else ''} detected: " + "; ".join(parts) + "."
 
@@ -144,7 +148,7 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
         "llm_context": llm_context
     }
 
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Identify faces in a photo")
     parser.add_argument("--photo", required=True, help="Path to photo")
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
@@ -162,7 +166,3 @@ def main():
         save_crops=not args.no_crops
     )
     print(json.dumps(result, indent=2))
-
-
-if __name__ == "__main__":
-    main()
