@@ -31,17 +31,24 @@ metadata:
 Give your OpenClaw agent a real face memory. Enroll people with reference
 photos, then automatically identify them in inbound images.
 
-## Automatic behavior (always on)
+## Automatic behavior
 
-**When the user sends a photo or image:**
+**When the user intentionally sends a photo or image to the assistant:**
+
+The user sharing an image with their AI colleague is an act of intentional
+sharing — they want the assistant to see and understand what's in the image.
+In this context, face identification should happen automatically as part of
+understanding the image content.
 
 1. Save the image to a temp path.
 2. Run face identification: `sam-faces identify <path>`
 3. Parse the JSON response.
 4. If `face_count > 0`, prepend `llm_context` to your image description.
-5. If any face has `"unknown": true`, ask the user who they are, then enroll them.
+5. If any face has `"unknown": true`, ask the user who they are, then offer
+to enroll them.
 
-Do this automatically — do not ask permission first.
+This should happen as part of normal image processing — the user has already
+chosen to share the image.
 
 ## Installation
 
