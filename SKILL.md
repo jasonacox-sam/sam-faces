@@ -19,7 +19,7 @@ metadata:
               "kind": "pip",
               "package": "sam-faces",
               "bins": ["sam-faces"],
-              "label": "Install via PyPI",
+              "label": "Install sam-faces from PyPI",
             },
           ],
       },
@@ -36,7 +36,7 @@ photos, then automatically identify them in inbound images.
 **When the user sends a photo or image:**
 
 1. Save the image to a temp path.
-2. Run: `sam-faces identify <path>`
+2. Run face identification: `sam-faces identify <path>`
 3. Parse the JSON response.
 4. If `face_count > 0`, prepend `llm_context` to your image description.
 5. If any face has `"unknown": true`, ask the user who they are, then enroll them.
@@ -45,63 +45,70 @@ Do this automatically — do not ask permission first.
 
 ## Installation
 
-### Via PyPI (recommended)
-
 ```bash
 pip install sam-faces
 ```
 
-The `sam-faces` CLI is added to your PATH automatically.
-
-### Manual (from source)
-
+Or use the OpenClaw skill installer:
 ```bash
-git clone https://github.com/jasonacox-sam/sam-faces.git
-cd sam-faces
-pip install -e .
+openclaw skills install sam-faces
 ```
 
-### Via OpenClaw Skills UI
+## Setup
 
-Search "face recognition" in the OpenClaw Skills UI and install with one click.
-
-## CLI Usage
-
-### Identify faces in a photo
+The `sam-faces` command is available after installation:
 
 ```bash
-sam-faces identify /path/to/photo.jpg
+sam-faces --help
 ```
 
-Returns JSON with names, confidence scores, bounding boxes, position, and an
-`llm_context` string.
-
-### Enroll a person
+## Enroll a person
 
 ```bash
 sam-faces enroll --name "Jane Smith" --photo /path/to/photo.jpg
 ```
 
-If multiple faces are detected, specify which to enroll:
+- One reference photo is usually enough (default threshold: 0.55).
+- Enroll 2–3 photos across different lighting for best accuracy.
+- Encodings are stored in `{workspaceDir}/faces/people.db`.
+
+## Identify faces
 
 ```bash
-sam-faces enroll --name "Jane Smith" --photo photo.jpg --face-index 1
+sam-faces identify /path/to/image.jpg
 ```
 
-One reference photo is usually enough (default threshold: 0.55).
-Enroll 2–3 photos across different lighting for best accuracy.
+Returns JSON with names, confidence scores, bounding boxes, and an
+`llm_context` string:
 
-### List enrolled people
+```json
+{
+  "face_count": 2,
+  "faces": [
+    {
+      "name": "Jane Smith",
+      "confidence": 0.646,
+      "unknown": false,
+      "position": "middle"
+    }
+  ],
+  "llm_context": "2 faces detected: Jane Smith (middle, 64%); John Smith (left, 57%)."
+}
+```
+
+## List enrolled people
 
 ```bash
 sam-faces list
 ```
 
-### Review unknown faces
+## Manage unknown faces
 
 ```bash
 sam-faces unknowns
 ```
+
+Shows all unknown face crops waiting to be enrolled.
 
 ## Thresholds
 
@@ -113,8 +120,16 @@ sam-faces unknowns
 
 - All inference runs locally via `face_recognition` (dlib). Nothing leaves the machine.
 - Database: `{workspaceDir}/faces/people.db`
-- Unknown face crops: `{workspaceDir}/faces/unknown/`
-- Face crop thumbnails (audit trail): `{workspaceDir}/faces/crops/`
-- Requires Python 3.10+ and build tools (cmake, C++ compiler) for dlib.
-  - On Ubuntu/Debian: `sudo apt install cmake build-essential`
-  - On macOS: `xcode-select --install`
+- Unknown face crops saved to: `{workspaceDir}/faces/unknown/`
+- Works with existing face databases — no migration needed.
+
+## When to use
+
+- User sends a photo with people in it
+- Adding a new person to the face database
+- Checking who is enrolled
+
+## When NOT to use
+
+- Images with no faces (skip automatically)
+- Processing large batches of images (one at a time)
