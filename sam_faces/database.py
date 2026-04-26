@@ -1,31 +1,20 @@
-#!/usr/bin/env python3
-"""
-face_db.py — SQLite database layer for Sam's face recognition system
-
-Schema:
-  people(id TEXT PK, name TEXT, created_at TEXT)
-  encodings(id TEXT PK, person_id TEXT FK, vector BLOB, note TEXT, added_at TEXT)
-  unknown_candidates(id TEXT PK, image_path TEXT, face_crop_path TEXT,
-                     detected_at TEXT, resolved INTEGER DEFAULT 0,
-                     resolved_as TEXT)
-"""
-
 import sqlite3
 import numpy as np
-import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "faces" / "people.db"
+# Default database location — uses existing Sam DB if present
+DEFAULT_DB_DIR = Path.home() / ".openclaw" / "workspace" / "faces"
+DB_PATH = DEFAULT_DB_DIR / "people.db"
 
-# ── Connection ─────────────────────────────────────────────────────────────
 
 def get_conn():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     """Create tables if they don't exist."""
@@ -36,15 +25,14 @@ def init_db():
                 name       TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS encodings (
                 id         TEXT PRIMARY KEY,
                 person_id  TEXT NOT NULL REFERENCES people(id),
                 vector     BLOB NOT NULL,
                 note       TEXT,
-                added_at   TEXT NOT NULL
+                added_at   TEXT NOT NULL,
+                crop_path  TEXT
             );
-
             CREATE TABLE IF NOT EXISTS unknown_candidates (
                 id             TEXT PRIMARY KEY,
                 image_path     TEXT NOT NULL,
@@ -54,20 +42,17 @@ def init_db():
                 resolved_as    TEXT
             );
         """)
-    print(f"✅ Database ready: {DB_PATH}", file=__import__('sys').stderr)
 
-# ── Encoding helpers ────────────────────────────────────────────────────────
 
 def vec_to_blob(encoding: np.ndarray) -> bytes:
     return encoding.astype(np.float64).tobytes()
 
+
 def blob_to_vec(blob: bytes) -> np.ndarray:
     return np.frombuffer(blob, dtype=np.float64)
 
-# ── People ──────────────────────────────────────────────────────────────────
 
 def add_person(name: str) -> str:
-    """Add a new person, return their id. Returns existing id if name matches."""
     existing = find_person_by_name(name)
     if existing:
         return existing["id"]
@@ -79,12 +64,14 @@ def add_person(name: str) -> str:
         )
     return pid
 
+
 def find_person_by_name(name: str) -> dict | None:
     with get_conn() as conn:
         row = conn.execute(
             "SELECT * FROM people WHERE LOWER(name) = LOWER(?)", (name,)
         ).fetchone()
     return dict(row) if row else None
+
 
 def list_people() -> list[dict]:
     with get_conn() as conn:
@@ -97,7 +84,6 @@ def list_people() -> list[dict]:
         """).fetchall()
     return [dict(r) for r in rows]
 
-# ── Encodings ───────────────────────────────────────────────────────────────
 
 def add_encoding(person_id: str, encoding: np.ndarray, note: str = "", crop_path: str = "") -> str:
     eid = str(uuid.uuid4())[:12]
@@ -108,8 +94,8 @@ def add_encoding(person_id: str, encoding: np.ndarray, note: str = "", crop_path
         )
     return eid
 
+
 def get_all_encodings() -> list[dict]:
-    """Return all encodings with person name attached."""
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT e.id, e.person_id, e.vector, e.note, e.added_at, p.name
@@ -121,7 +107,6 @@ def get_all_encodings() -> list[dict]:
         for r in rows
     ]
 
-# ── Unknown candidates ───────────────────────────────────────────────────────
 
 def add_unknown(image_path: str, face_crop_path: str = "") -> str:
     uid = str(uuid.uuid4())[:12]
@@ -132,12 +117,14 @@ def add_unknown(image_path: str, face_crop_path: str = "") -> str:
         )
     return uid
 
+
 def resolve_unknown(unknown_id: str, person_name: str):
     with get_conn() as conn:
         conn.execute(
             "UPDATE unknown_candidates SET resolved=1, resolved_as=? WHERE id=?",
             (person_name, unknown_id)
         )
+
 
 def list_unknowns(unresolved_only: bool = True) -> list[dict]:
     with get_conn() as conn:
@@ -147,21 +134,3 @@ def list_unknowns(unresolved_only: bool = True) -> list[dict]:
         query += " ORDER BY detected_at DESC"
         rows = conn.execute(query).fetchall()
     return [dict(r) for r in rows]
-
-# ── CLI ──────────────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    import sys
-    init_db()
-    if "--list" in sys.argv:
-        people = list_people()
-        if not people:
-            print("No people enrolled yet.")
-        for p in people:
-            print(f"  {p['name']:30s} — {p['encoding_count']} encoding(s)  [{p['id']}]")
-    elif "--unknowns" in sys.argv:
-        unknowns = list_unknowns()
-        if not unknowns:
-            print("No unresolved unknown faces.")
-        for u in unknowns:
-            print(f"  [{u['id']}] {u['detected_at'][:10]}  {u['image_path']}")

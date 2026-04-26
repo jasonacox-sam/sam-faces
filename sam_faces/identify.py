@@ -1,52 +1,16 @@
-#!/usr/bin/env python3
-"""
-identify_faces.py — Identify faces in a photo and return structured JSON
-
-Usage:
-    python3 identify_faces.py --photo /path/to/photo.jpg
-    python3 identify_faces.py --photo photo.jpg --threshold 0.85 --save-unknowns
-
-Output JSON:
-    {
-      "face_count": 2,
-      "faces": [
-        {
-          "name": "Jason Cox",
-          "confidence": 0.94,
-          "unknown": false,
-          "bounding_box": {"top": 120, "right": 340, "bottom": 280, "left": 180},
-          "center": [260, 200],
-          "position_desc": "upper-left"
-        },
-        {
-          "name": "Unknown",
-          "confidence": null,
-          "unknown": true,
-          "unknown_id": "abc123",
-          "bounding_box": {"top": 80, "right": 600, "bottom": 240, "left": 450},
-          "center": [525, 160],
-          "position_desc": "upper-right"
-        }
-      ],
-      "llm_context": "2 faces detected: Jason Cox (upper-left, 94% confidence); Unknown person (upper-right)."
-    }
-"""
-
 import argparse
 import json
-import sys
-import os
 from pathlib import Path
 
 import face_recognition
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).parent))
-from face_db import init_db, get_all_encodings, add_unknown
+from .database import init_db, get_all_encodings, add_unknown
 
-DEFAULT_THRESHOLD = 0.55  # lower distance = better match; 0.55 is a good balance
+DEFAULT_THRESHOLD = 0.55
 
-def position_desc(loc, img_h, img_w):
+
+def _position_desc(loc, img_h, img_w):
     top, right, bottom, left = loc
     center_x = (left + right) // 2
     center_y = (top + bottom) // 2
@@ -54,8 +18,10 @@ def position_desc(loc, img_h, img_w):
     h = "left" if center_x < img_w // 3 else ("center" if center_x < 2 * img_w // 3 else "right")
     return f"{v}-{h}" if h != "center" else v
 
+
 def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
              save_unknowns: bool = True, save_crops: bool = True) -> dict:
+    """Identify faces in a photo and return structured JSON."""
     init_db()
 
     path = Path(photo_path)
@@ -75,7 +41,6 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
             "llm_context": "No faces detected in this image."
         }
 
-    # Load known encodings from DB
     known = get_all_encodings()
     known_vectors = [e["vector"] for e in known]
     known_names = [e["name"] for e in known]
@@ -84,7 +49,7 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
     for encoding, loc in zip(encodings, locations):
         top, right, bottom, left = loc
         center = [(left + right) // 2, (top + bottom) // 2]
-        pos = position_desc(loc, img_h, img_w)
+        pos = _position_desc(loc, img_h, img_w)
 
         if known_vectors:
             distances = face_recognition.face_distance(known_vectors, encoding)
@@ -108,9 +73,9 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
         if save_unknowns:
             crop_path = ""
             if save_crops:
-                crops_dir = Path(__file__).parent.parent / "faces" / "unknown"
-                crops_dir.mkdir(parents=True, exist_ok=True)
                 from PIL import Image as PILImage
+                crops_dir = Path.home() / ".openclaw" / "workspace" / "faces" / "unknown"
+                crops_dir.mkdir(parents=True, exist_ok=True)
                 img_pil = PILImage.fromarray(image)
                 crop = img_pil.crop((left, top, right, bottom))
                 crop_path = str(crops_dir / f"unknown_{path.stem}_{top}_{left}.jpg")
@@ -147,22 +112,3 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
         "faces": faces,
         "llm_context": llm_context
     }
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Identify faces in a photo")
-    parser.add_argument("--photo", required=True, help="Path to photo")
-    parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
-                        help=f"Match threshold (default: {DEFAULT_THRESHOLD}; lower = stricter)")
-    parser.add_argument("--no-save-unknowns", action="store_true",
-                        help="Don't save unknown faces to the candidates table")
-    parser.add_argument("--no-crops", action="store_true",
-                        help="Don't save cropped face images for unknowns")
-    args = parser.parse_args()
-
-    result = identify(
-        args.photo,
-        threshold=args.threshold,
-        save_unknowns=not args.no_save_unknowns,
-        save_crops=not args.no_crops
-    )
-    print(json.dumps(result, indent=2))
