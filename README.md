@@ -1,3 +1,6 @@
+[![PyPI Downloads](https://static.pepy.tech/badge/sam-faces/month)](https://pepy.tech/project/sam-faces)
+[![GitHub Stars](https://img.shields.io/github/stars/jasonacox-sam/sam-faces?style=social)](https://github.com/jasonacox-sam/sam-faces/stargazers)
+
 # sam-faces 👤
 
 **Face recognition and identity memory for AI assistants.**
