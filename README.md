@@ -107,7 +107,7 @@ The system compares new faces against all stored encodings using Euclidean dista
 
 Works across group photos, identifying everyone it knows:
 
-![Paris demo](docs/demo/demo_paris.jpg)
+<img src="docs/demo/demo_paris.jpg" alt="Paris demo" width="50%" />
 
 ### Confidence Scoring
 
