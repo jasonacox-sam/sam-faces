@@ -3,7 +3,7 @@
 **Face recognition and identity memory for AI assistants.**
 
 [![PyPI](https://img.shields.io/pypi/v/sam-faces)](https://pypi.org/project/sam-faces/)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Give your AI assistant a real face memory. Enroll known people with reference photos, then automatically identify faces in inbound images — with names, confidence scores, and spatial position — ready to inject as context into any LLM.
@@ -18,7 +18,7 @@ pip install sam-faces
 
 The `sam-faces` command is added to your PATH automatically.
 
-**Requirements:** Python 3.9+ with build tools (for dlib compilation):
+**Requirements:** Python 3.10+ with build tools (for dlib compilation):
 - Ubuntu/Debian: `sudo apt install cmake build-essential`
 - macOS: `xcode-select --install`
 
@@ -35,10 +35,10 @@ Output:
 {
   "face_count": 2,
   "faces": [
-    {"name": "Jane Smith", "confidence": 0.646, "position_desc": "middle"},
-    {"name": "John Smith", "confidence": 0.571, "position_desc": "middle-left"}
+    {"name": "Jane Smith", "confidence": 0.646, "center": [220, 330], "position_desc": "middle-left"},
+    {"name": "John Smith", "confidence": 0.571, "center": [920, 310], "position_desc": "middle-right"}
   ],
-  "llm_context": "2 faces detected: Jane Smith (middle, 64%); John Smith (middle-left, 57%)."
+  "llm_context": "2 faces detected: Jane Smith (at 22% left, 33% down, 64% confidence); John Smith (at 92% left, 31% down, 57% confidence)."
 }
 ```
 
@@ -53,6 +53,33 @@ sam-faces enroll --name "Jane Smith" --photo photo.jpg
 ```bash
 sam-faces list
 ```
+
+## Python API
+
+You can also use sam-faces as a library inside your Python scripts or agents:
+
+```python
+from sam_faces import identify, enroll, list_people
+
+# Identify faces in a photo
+result = identify("photo.jpg")
+print(result["llm_context"])
+# → "2 faces detected: Jane Smith (at 22% left, 33% down, 64% confidence); ..."
+
+# Enroll a new person
+enroll("Jane Smith", "photo.jpg", note="birthday party")
+
+# List all enrolled people
+for person in list_people():
+    print(f"{person['name']}: {person['encoding_count']} encodings")
+```
+
+### Lazy imports
+
+The package uses lazy loading for heavy vision dependencies. Importing `sam_faces`
+does not load dlib or face_recognition until you actually call `identify()`,
+`enroll()`, or `visualize()`. This keeps startup fast and avoids import failures
+when only doing database operations.
 
 ## For OpenClaw Agents
 

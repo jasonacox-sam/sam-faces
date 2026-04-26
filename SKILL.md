@@ -11,7 +11,7 @@ metadata:
     "openclaw":
       {
         "emoji": "👤",
-        "requires": { "bins": ["python3"] },
+        "requires": { "bins": ["sam-faces"] },
         "install":
           [
             {
@@ -115,6 +115,6 @@ sam-faces unknowns
 - Database: `{workspaceDir}/faces/people.db`
 - Unknown face crops: `{workspaceDir}/faces/unknown/`
 - Face crop thumbnails (audit trail): `{workspaceDir}/faces/crops/`
-- Requires Python 3.9+ and build tools (cmake, C++ compiler) for dlib.
+- Requires Python 3.10+ and build tools (cmake, C++ compiler) for dlib.
   - On Ubuntu/Debian: `sudo apt install cmake build-essential`
   - On macOS: `xcode-select --install`

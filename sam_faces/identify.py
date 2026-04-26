@@ -1,3 +1,14 @@
+"""
+sam_faces/identify.py — Face identification in photos.
+
+Given a photo, detects all faces and matches them against enrolled encodings.
+Returns structured JSON with names, confidence scores, bounding boxes, and
+an llm_context string with percentage-based positioning for LLM enrichment.
+
+Example llm_context output:
+  "2 faces detected: Jane Smith (at 22% left, 33% down, 64% confidence); ..."
+"""
+
 import argparse
 import json
 from pathlib import Path
@@ -14,13 +25,25 @@ def _position_desc(loc, img_h, img_w):
     top, right, bottom, left = loc
     center_x = (left + right) // 2
     center_y = (top + bottom) // 2
-    v = "upper" if center_y < img_h // 3 else ("middle" if center_y < 2 * img_h // 3 else "lower")
-    h = "left" if center_x < img_w // 3 else ("center" if center_x < 2 * img_w // 3 else "right")
+    v = (
+        "upper"
+        if center_y < img_h // 3
+        else ("middle" if center_y < 2 * img_h // 3 else "lower")
+    )
+    h = (
+        "left"
+        if center_x < img_w // 3
+        else ("center" if center_x < 2 * img_w // 3 else "right")
+    )
     return f"{v}-{h}" if h != "center" else v
 
 
-def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
-             save_unknowns: bool = True, save_crops: bool = True) -> dict:
+def identify(
+    photo_path: str,
+    threshold: float = DEFAULT_THRESHOLD,
+    save_unknowns: bool = True,
+    save_crops: bool = True,
+) -> dict:
     """Identify faces in a photo and return structured JSON."""
     init_db()
 
@@ -38,7 +61,7 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
         return {
             "face_count": 0,
             "faces": [],
-            "llm_context": "No faces detected in this image."
+            "llm_context": "No faces detected in this image.",
         }
 
     known = get_all_encodings()
@@ -58,14 +81,21 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
             confidence = round(1.0 - best_dist, 3)
 
             if best_dist <= threshold:
-                faces.append({
-                    "name": known_names[best_idx],
-                    "confidence": round(confidence, 3),
-                    "unknown": False,
-                    "bounding_box": {"top": top, "right": right, "bottom": bottom, "left": left},
-                    "center": center,
-                    "position_desc": pos
-                })
+                faces.append(
+                    {
+                        "name": known_names[best_idx],
+                        "confidence": round(confidence, 3),
+                        "unknown": False,
+                        "bounding_box": {
+                            "top": top,
+                            "right": right,
+                            "bottom": bottom,
+                            "left": left,
+                        },
+                        "center": center,
+                        "position_desc": pos,
+                    }
+                )
                 continue
 
         # Unknown face
@@ -74,7 +104,10 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
             crop_path = ""
             if save_crops:
                 from PIL import Image as PILImage
-                crops_dir = Path.home() / ".openclaw" / "workspace" / "faces" / "unknown"
+
+                crops_dir = (
+                    Path.home() / ".openclaw" / "workspace" / "faces" / "unknown"
+                )
                 crops_dir.mkdir(parents=True, exist_ok=True)
                 img_pil = PILImage.fromarray(image)
                 crop = img_pil.crop((left, top, right, bottom))
@@ -82,15 +115,22 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
                 crop.save(crop_path)
             unknown_id = add_unknown(str(path), crop_path)
 
-        faces.append({
-            "name": "Unknown",
-            "confidence": None,
-            "unknown": True,
-            "unknown_id": unknown_id,
-            "bounding_box": {"top": top, "right": right, "bottom": bottom, "left": left},
-            "center": center,
-            "position_desc": pos
-        })
+        faces.append(
+            {
+                "name": "Unknown",
+                "confidence": None,
+                "unknown": True,
+                "unknown_id": unknown_id,
+                "bounding_box": {
+                    "top": top,
+                    "right": right,
+                    "bottom": bottom,
+                    "left": left,
+                },
+                "center": center,
+                "position_desc": pos,
+            }
+        )
 
     # Build LLM context string
     parts = []
@@ -105,10 +145,10 @@ def identify(photo_path: str, threshold: float = DEFAULT_THRESHOLD,
             pct = int(f["confidence"] * 100)
             parts.append(f"{f['name']} ({coord}, {pct}% confidence)")
 
-    llm_context = f"{len(faces)} face{'s' if len(faces) != 1 else ''} detected: " + "; ".join(parts) + "."
+    llm_context = (
+        f"{len(faces)} face{'s' if len(faces) != 1 else ''} detected: "
+        + "; ".join(parts)
+        + "."
+    )
 
-    return {
-        "face_count": len(faces),
-        "faces": faces,
-        "llm_context": llm_context
-    }
+    return {"face_count": len(faces), "faces": faces, "llm_context": llm_context}

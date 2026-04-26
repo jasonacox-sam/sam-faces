@@ -1,3 +1,12 @@
+"""
+sam_faces/enroll.py — Face enrollment into the people database.
+
+Given a name and photo, detects the face, generates a 128-dim encoding vector,
+and stores it in SQLite with an audit-trail crop thumbnail.
+
+Supports single-face auto-enrollment or multi-face manual selection via --face-index.
+"""
+
 import tempfile
 import os
 from pathlib import Path
@@ -6,7 +15,13 @@ from PIL import Image
 import face_recognition
 import numpy as np
 
-from .database import init_db, add_person, add_encoding, find_person_by_name, get_all_encodings
+from .database import (
+    init_db,
+    add_person,
+    add_encoding,
+    find_person_by_name,
+    get_all_encodings,
+)
 
 CROPS_DIR = Path.home() / ".openclaw" / "workspace" / "faces" / "crops"
 
@@ -54,7 +69,7 @@ def enroll(name: str, photo_path: str, note: str = "", face_index: int = None):
         max(0, left - padding),
         max(0, top - padding),
         min(pil_img.width, right + padding),
-        min(pil_img.height, bottom + padding)
+        min(pil_img.height, bottom + padding),
     )
     crop = pil_img.crop(crop_box)
     crop.thumbnail((200, 200))
@@ -72,13 +87,16 @@ def enroll(name: str, photo_path: str, note: str = "", face_index: int = None):
     # Update crop_path in DB to final filename
     import sqlite3
     from .database import get_conn
+
     with get_conn() as conn:
-        conn.execute("UPDATE encodings SET crop_path=? WHERE id=?", (str(final_crop), eid))
+        conn.execute(
+            "UPDATE encodings SET crop_path=? WHERE id=?", (str(final_crop), eid)
+        )
 
     return {
         "encoding_id": eid,
         "person_id": person_id,
         "person_name": name,
         "crop_path": str(final_crop),
-        "note": note or path.name
+        "note": note or path.name,
     }
