@@ -96,10 +96,17 @@ Returns JSON with names, confidence scores, bounding boxes, and an
       "name": "Jane Smith",
       "confidence": 0.646,
       "unknown": false,
-      "position": "middle"
+      "bounding_box": {
+        "top": 220,
+        "right": 340,
+        "bottom": 350,
+        "left": 210
+      },
+      "center": [275, 285],
+      "position_desc": "middle-left"
     }
   ],
-  "llm_context": "2 faces detected: Jane Smith (middle, 64%); John Smith (left, 57%)."
+  "llm_context": "2 faces detected: Jane Smith (at 22% left, 33% down, 64% confidence); John Smith (at 92% left, 31% down, 57% confidence)."
 }
 ```
 
