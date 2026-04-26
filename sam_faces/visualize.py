@@ -1,116 +1,89 @@
-#!/usr/bin/env python3
 """
-visualize.py — Generate annotated face recognition demo images for sam-faces.
+sam_faces/visualize.py — Draw bounding boxes and labels on detected faces.
 
-Usage:
-    python3 visualize.py --photo input.jpg --output annotated.jpg [--db path/to/people.db]
+Green boxes for known faces (name + confidence). Red boxes for unknown faces.
+Useful for the "who is this?" workflow — shows exactly which faces in a
+group photo couldn't be identified.
+
+Usage: sam-faces visualize photo.jpg --output result.jpg
 """
 
-import argparse
-import os
-import sqlite3
-import numpy as np
-import face_recognition
 from PIL import Image, ImageDraw, ImageFont
+from pathlib import Path
+import json
 
-DEFAULT_DB = os.environ.get("SAM_FACES_DB", "faces/people.db")
-THRESHOLD = 0.55
-
-COLORS = [
-    (52, 211, 153),   # green
-    (96, 165, 250),   # blue
-    (251, 191, 36),   # yellow
-    (248, 113, 113),  # red
-    (167, 139, 250),  # purple
-    (251, 146, 60),   # orange
-]
+from .identify import identify
 
 
-def load_db_encodings(db_path):
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    c.execute("""
-        SELECT p.name, e.vector
-        FROM encodings e
-        JOIN people p ON e.person_id = p.id
-    """)
-    rows = c.fetchall()
-    conn.close()
-    known = {}
-    for name, vec_bytes in rows:
-        vec = np.frombuffer(vec_bytes, dtype=np.float64)
-        known.setdefault(name, []).append(vec)
-    return known
+def visualize(photo_path: str, output_path: str = None, threshold: float = 0.55):
+    """Draw bounding boxes and labels on detected faces."""
+    result = identify(
+        photo_path, threshold=threshold, save_unknowns=False, save_crops=False
+    )
 
+    if result.get("error"):
+        return {"error": result["error"], "output_path": None}
 
-def identify(face_enc, known):
-    best_name, best_conf = "Unknown", None
-    best_dist = 1.0
-    for name, encs in known.items():
-        dists = face_recognition.face_distance(encs, face_enc)
-        d = float(np.min(dists))
-        if d < best_dist:
-            best_dist = d
-            best_name = name
-            best_conf = round(1.0 - d, 3)
-    if best_dist > THRESHOLD:
-        return "Unknown", None
-    return best_name, best_conf
+    if result["face_count"] == 0:
+        return {"error": "No faces detected", "output_path": None}
 
+    img = Image.open(photo_path)
+    draw = ImageDraw.Draw(img)
 
-def annotate(photo_path, output_path, db_path=DEFAULT_DB):
-    known = load_db_encodings(db_path)
-    img = face_recognition.load_image_file(photo_path)
-    locations = face_recognition.face_locations(img, model="hog")
-    encodings = face_recognition.face_encodings(img, locations)
-
-    pil = Image.open(photo_path).convert("RGB")
-    draw = ImageDraw.Draw(pil)
-
-    # Try to load a font; fall back to default
+    # Try to get a font, fall back to default if not available
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
-        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
-    except Exception:
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16
+        )
+        small_font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12
+        )
+    except:
         font = ImageFont.load_default()
         small_font = font
 
-    results = []
-    for i, (loc, enc) in enumerate(zip(locations, encodings)):
-        top, right, bottom, left = loc
-        name, conf = identify(enc, known)
-        color = COLORS[i % len(COLORS)]
+    for face in result["faces"]:
+        bb = face["bounding_box"]
+        top, right, bottom, left = bb["top"], bb["right"], bb["bottom"], bb["left"]
 
-        # Draw bounding box (thick)
-        for t in range(3):
-            draw.rectangle([(left - t, top - t), (right + t, bottom + t)], outline=color)
+        if face["unknown"]:
+            color = "red"
+            label = "Unknown"
+            conf_text = ""
+        else:
+            color = "green"
+            label = face["name"]
+            conf_text = f"{int(face['confidence'] * 100)}%"
 
-        # Label background
-        label = f"{name}" if name == "Unknown" else f"{name}  {int(conf*100)}%"
-        bbox = font.getbbox(label)
-        lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        pad = 4
-        label_y = top - lh - pad * 2 - 2
-        if label_y < 0:
-            label_y = bottom + 2
+        # Draw bounding box
+        draw.rectangle([left, top, right, bottom], outline=color, width=3)
+
+        # Draw label background
+        text = f"{label} {conf_text}".strip()
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+
+        label_y = top - text_h - 4 if top > text_h + 4 else bottom + 4
         draw.rectangle(
-            [(left, label_y), (left + lw + pad * 2, label_y + lh + pad * 2)],
-            fill=color
+            [left, label_y, left + text_w + 8, label_y + text_h + 4], fill=color
         )
-        draw.text((left + pad, label_y + pad), label, fill=(0, 0, 0), font=font)
 
-        results.append({"name": name, "confidence": conf, "box": loc})
-        print(f"  [{i}] {name} — {int(conf*100)}% confidence" if conf else f"  [{i}] Unknown")
+        # Draw label text
+        draw.text((left + 4, label_y + 2), text, fill="white", font=font)
 
-    pil.save(output_path, quality=92)
-    print(f"✅ Saved annotated image: {output_path}")
-    return results
+    # Save output
+    if output_path:
+        out = Path(output_path)
+    else:
+        p = Path(photo_path)
+        out = p.parent / f"{p.stem}_faces{p.suffix}"
 
+    img.save(out)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Annotate faces in a photo")
-    parser.add_argument("--photo", required=True, help="Input photo path")
-    parser.add_argument("--output", required=True, help="Output annotated image path")
-    parser.add_argument("--db", default=DEFAULT_DB, help="Path to people.db")
-    args = parser.parse_args()
-    annotate(args.photo, args.output, args.db)
+    return {
+        "face_count": result["face_count"],
+        "faces": result["faces"],
+        "output_path": str(out),
+        "llm_context": result["llm_context"],
+    }

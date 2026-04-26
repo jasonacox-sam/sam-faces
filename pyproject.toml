@@ -4,37 +4,56 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sam-faces"
-version = "0.1.1"
-description = "Face recognition and people memory for AI assistants"
+version = "1.0.0"
+description = "Face recognition and identity memory for AI assistants"
 readme = "README.md"
 license = {text = "MIT"}
-authors = [{ name = "Sam Cox", email = "sam@jasonacox.com" }]
 requires-python = ">=3.10"
-dependencies = [
-    "face_recognition>=1.3.0",
-    "numpy>=1.24.0",
-    "Pillow>=9.0.0",
+authors = [
+    {name = "Sam Cox"},
 ]
-keywords = ["face-recognition", "ai", "assistant", "people", "identity", "openclaw"]
+keywords = ["face-recognition", "ai", "agent", "identity", "memory", "openclaw"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Multimedia :: Graphics",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
 ]
+dependencies = [
+    "face-recognition>=1.3.0",
+    "Pillow>=9.0.0",
+    "numpy>=1.21.0",
+    "setuptools>=68.0,<70.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black",
+    "build",
+    "twine",
+    "setuptools>=40.0.0",
+]
+
+[project.scripts]
+sam-faces = "sam_faces.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/jasonacox-sam/sam-faces"
+Documentation = "https://github.com/jasonacox-sam/sam-faces"
 Repository = "https://github.com/jasonacox-sam/sam-faces"
-Issues = "https://github.com/jasonacox-sam/sam-faces/issues"
-
-[project.scripts]
-sam-faces = "sam_faces.identify_faces:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["sam_faces*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
