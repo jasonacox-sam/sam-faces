@@ -35,8 +35,8 @@ Output:
 {
   "face_count": 2,
   "faces": [
-    {"name": "Jane Smith", "confidence": 0.646, "center": [220, 330], "position_desc": "middle-left"},
-    {"name": "John Smith", "confidence": 0.571, "center": [920, 310], "position_desc": "middle-right"}
+    {"name": "Jane Smith", "confidence": 0.646, "unknown": false, "center": [275, 285], "position_desc": "middle-left"},
+    {"name": "John Smith", "confidence": 0.571, "unknown": false, "center": [930, 310], "position_desc": "middle-right"}
   ],
   "llm_context": "2 faces detected: Jane Smith (at 22% left, 33% down, 64% confidence); John Smith (at 92% left, 31% down, 57% confidence)."
 }
