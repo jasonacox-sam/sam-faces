@@ -110,6 +110,18 @@ Returns JSON with names, confidence scores, bounding boxes, and an
 }
 ```
 
+## Visualize faces (draw bounding boxes + labels)
+
+```bash
+sam-faces visualize /path/to/image.jpg
+```
+
+Creates `image_faces.jpg` with boxes and name labels overlaid.
+
+```bash
+sam-faces visualize /path/to/image.jpg -o /path/to/output.jpg
+```
+
 ## List enrolled people
 
 ```bash
