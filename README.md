@@ -45,13 +45,27 @@ Output:
 }
 ```
 
-### 2. Enroll a new person
+### 2. Visualize identified faces
+
+Draw bounding boxes and name labels directly on the photo:
+
+```bash
+sam-faces visualize photo.jpg
+```
+
+Creates `photo_faces.jpg` with boxes and labels. Specify a custom output path:
+
+```bash
+sam-faces visualize photo.jpg -o ~/Desktop/annotated.jpg
+```
+
+### 3. Enroll a new person
 
 ```bash
 sam-faces enroll --name "Jane Smith" --photo photo.jpg
 ```
 
-### 3. List enrolled people
+### 4. List enrolled people
 
 ```bash
 sam-faces list
