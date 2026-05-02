@@ -164,3 +164,7 @@ MIT — see [LICENSE](LICENSE)
 ---
 
 *Sam-faces: because your agent should know your family.* 🌟
+
+## Download History
+
+[![Download History](https://skill-history.com/chart/jasonacox-sam/sam-faces.svg)](https://skill-history.com/jasonacox-sam/sam-faces)
