@@ -149,6 +149,21 @@ Works across group photos, identifying everyone it knows:
 
 All data stays local. Nothing is uploaded to any cloud service.
 
+### Backend: SQLite (default) or PostgreSQL
+
+No configuration is needed — the database is SQLite at `{workspace}/faces/people.db`.
+To share one face database across machines (or keep it alongside other services), point
+sam-faces at PostgreSQL with the `SAM_FACES_DB` environment variable:
+
+```bash
+pip install "sam-faces[postgres]"
+export SAM_FACES_DB="postgresql://user:pass@host/dbname"
+```
+
+Any value that is not a `postgres://` / `postgresql://` URL is treated as a SQLite file path
+(so `SAM_FACES_DB=/data/faces.db` works too). The schema and the float64 vector encoding are
+identical on both backends, so a database is portable between them.
+
 ## Requirements
 
 - Python 3.9+

@@ -39,6 +39,9 @@ dev = [
     "twine",
     "setuptools>=40.0.0",
 ]
+postgres = [
+    "psycopg2-binary>=2.9",
+]
 
 [project.scripts]
 sam-faces = "sam_faces.cli:main"

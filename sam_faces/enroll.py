@@ -85,13 +85,9 @@ def enroll(name: str, photo_path: str, note: str = "", face_index: int = None):
     os.rename(tmp.name, str(final_crop))
 
     # Update crop_path in DB to final filename
-    import sqlite3
-    from .database import get_conn
+    from .database import update_crop_path
 
-    with get_conn() as conn:
-        conn.execute(
-            "UPDATE encodings SET crop_path=? WHERE id=?", (str(final_crop), eid)
-        )
+    update_crop_path(eid, str(final_crop))
 
     return {
         "encoding_id": eid,

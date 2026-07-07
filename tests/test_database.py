@@ -104,3 +104,25 @@ def test_database_migration(tmp_path, monkeypatch):
     with sqlite3.connect(old_db) as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(encodings)").fetchall()]
         assert "crop_path" in cols
+
+
+def test_postgres_backend_roundtrip():
+    """Round-trip against a real Postgres backend. Skipped unless SAM_FACES_TEST_PG is set
+    to a DSN (e.g. postgresql://user@localhost/sam_faces_test)."""
+    import os, sys, subprocess, pytest
+    dsn = os.environ.get("SAM_FACES_TEST_PG")
+    if not dsn:
+        pytest.skip("set SAM_FACES_TEST_PG=postgresql://... to exercise the Postgres backend")
+    code = (
+        "import numpy as np, sam_faces.database as db\n"
+        "db.init_db()\n"
+        "pid = db.add_person('PG Roundtrip')\n"
+        "db.add_encoding(pid, np.arange(128, dtype=float), note='t')\n"
+        "assert any(p['name'] == 'PG Roundtrip' for p in db.list_people())\n"
+        "enc = [e for e in db.get_all_encodings() if e['person_id'] == pid]\n"
+        "assert enc and enc[0]['vector'].shape == (128,)\n"
+        "print('ok')\n"
+    )
+    env = {**os.environ, "SAM_FACES_DB": dsn}
+    r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+    assert r.returncode == 0 and "ok" in r.stdout, r.stderr
