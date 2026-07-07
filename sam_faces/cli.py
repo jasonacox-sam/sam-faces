@@ -85,6 +85,12 @@ def main():
         help=f"Match threshold (default: {DEFAULT_THRESHOLD})",
     )
 
+    # pet
+    p_pet = sub.add_parser("pet", help="Recognize/register known pets (vision model)")
+    p_pet.add_argument("action", choices=["add", "list", "identify", "describe"])
+    p_pet.add_argument("pet_args", nargs="*",
+                       help="add: NAME SPECIES DESCRIPTION  |  identify|describe: IMAGE")
+
     args = parser.parse_args()
 
     # Handle legacy --photo flag
@@ -141,6 +147,26 @@ def main():
             print(f"Error: {result['error']}", file=sys.stderr)
             sys.exit(1)
         print(json.dumps(result, indent=2))
+
+    elif args.command == "pet":
+        from .pets import add_pet, list_pets, identify_pet, describe
+        a = args.pet_args
+        if args.action == "list":
+            rows = list_pets()
+            if not rows:
+                print("No pets registered yet.")
+            for p in rows:
+                print(f"  {p['name']:20s} [{p['species']}] \u2014 {p['description']}")
+        elif args.action == "add":
+            if len(a) < 3:
+                print("Usage: sam-faces pet add NAME SPECIES DESCRIPTION", file=sys.stderr)
+                sys.exit(1)
+            add_pet(a[0], a[1], " ".join(a[2:]))
+            print(f"Registered {a[0]}")
+        elif args.action == "describe":
+            print(describe(a[0]))
+        elif args.action == "identify":
+            print(identify_pet(a[0]) or "UNKNOWN_ANIMAL / NONE")
 
 
 if __name__ == "__main__":

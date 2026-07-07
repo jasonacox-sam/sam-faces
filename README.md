@@ -157,6 +157,24 @@ All data stays local. Nothing is uploaded to any cloud service.
 - numpy
 - C++ compiler and cmake (for dlib build)
 
+## Pet recognition
+
+Face recognition only works on human faces. To recognize **pets** (a dog at the door, a cat on
+the porch cam), sam-faces can match a photo against a small registry using a local vision model
+via [Ollama](https://ollama.com):
+
+```bash
+ollama pull llava                       # any Ollama vision model works
+sam-faces pet add Bailey dog "small tan long-haired dog, graying muzzle"
+sam-faces pet identify frame.jpg        # -> "Bailey", "UNKNOWN_ANIMAL", or "NONE"
+sam-faces pet describe frame.jpg        # auto-describe an animal (handy for seeding)
+sam-faces pet list
+```
+
+`identify_pet()` returns the known pet's name, or `None` for an unknown animal — the useful
+signal for a camera setup (name your pets, alert on strays). Configure the model with
+`SAM_FACES_VLM_MODEL` (default `llava`) and the endpoint with `SAM_FACES_VLM_URL`.
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
