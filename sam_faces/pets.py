@@ -11,6 +11,7 @@ Config (environment):
   SAM_FACES_VLM_MODEL  vision model to use    (default: llava — any Ollama vision model works,
                                                e.g. llava, llama3.2-vision, qwen2.5vl, moondream)
 """
+
 import os
 import json
 import base64
@@ -45,32 +46,41 @@ def add_pet(name: str, species: str, description: str):
 def list_pets() -> list[dict]:
     _ensure_table()
     with get_conn() as conn:
-        rows = conn.execute("SELECT name, species, description FROM pets ORDER BY name").fetchall()
+        rows = conn.execute(
+            "SELECT name, species, description FROM pets ORDER BY name"
+        ).fetchall()
     return [dict(r) for r in rows]
 
 
 def _vlm(image_path: str, prompt: str, num_predict: int = 400) -> str:
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
-    payload = json.dumps({
-        "model": VLM_MODEL,
-        "messages": [{"role": "user", "content": prompt, "images": [b64]}],
-        "stream": False,
-        "options": {"temperature": 0.1, "num_predict": num_predict},
-    }).encode()
-    req = urllib.request.Request(VLM_URL, data=payload, headers={"Content-Type": "application/json"})
+    payload = json.dumps(
+        {
+            "model": VLM_MODEL,
+            "messages": [{"role": "user", "content": prompt, "images": [b64]}],
+            "stream": False,
+            "options": {"temperature": 0.1, "num_predict": num_predict},
+        }
+    ).encode()
+    req = urllib.request.Request(
+        VLM_URL, data=payload, headers={"Content-Type": "application/json"}
+    )
     data = json.loads(urllib.request.urlopen(req, timeout=60).read())
     content = data.get("message", {}).get("content", "") or ""
-    if "<think>" in content:                 # some reasoning models wrap their answer
+    if "<think>" in content:  # some reasoning models wrap their answer
         end = content.rfind("</think>")
-        content = content[end + 8:] if end > 0 else content
+        content = content[end + 8 :] if end > 0 else content
     return content.strip()
 
 
 def describe(image_path: str) -> str:
     """One-sentence description of the animal in an image — handy for seeding the registry."""
-    return _vlm(image_path, "Describe ONLY the animal in this image in one sentence: species, "
-                "size, coat color/pattern, and any distinctive features. No preamble.")
+    return _vlm(
+        image_path,
+        "Describe ONLY the animal in this image in one sentence: species, "
+        "size, coat color/pattern, and any distinctive features. No preamble.",
+    )
 
 
 def _match(answer: str, pets: list[dict]) -> str | None:
@@ -84,14 +94,17 @@ def _match(answer: str, pets: list[dict]) -> str | None:
 def identify_pet(image_path: str) -> str | None:
     """Return a known pet's name, or None for an unknown animal / no animal.
 
-    None is the alert-worthy case for a camera setup: an animal that is not one of yours."""
+    None is the alert-worthy case for a camera setup: an animal that is not one of yours.
+    """
     pets = list_pets()
     if not pets:
         return None
     roster = "\n".join(f"- {p['name']}: {p['description']}" for p in pets)
-    prompt = ("Identify the pet in this photo.\n"
-              f"Known pets:\n{roster}\n\n"
-              "If the animal clearly matches ONE known pet, reply with ONLY that name. "
-              "If it's an animal that matches none, reply 'UNKNOWN_ANIMAL'. "
-              "If there's no animal, reply 'NONE'.")
-    return _match(_vlm(image_path, prompt).strip('".\''), pets)
+    prompt = (
+        "Identify the pet in this photo.\n"
+        f"Known pets:\n{roster}\n\n"
+        "If the animal clearly matches ONE known pet, reply with ONLY that name. "
+        "If it's an animal that matches none, reply 'UNKNOWN_ANIMAL'. "
+        "If there's no animal, reply 'NONE'."
+    )
+    return _match(_vlm(image_path, prompt).strip("\".'"), pets)

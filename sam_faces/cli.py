@@ -88,8 +88,11 @@ def main():
     # pet
     p_pet = sub.add_parser("pet", help="Recognize/register known pets (vision model)")
     p_pet.add_argument("action", choices=["add", "list", "identify", "describe"])
-    p_pet.add_argument("pet_args", nargs="*",
-                       help="add: NAME SPECIES DESCRIPTION  |  identify|describe: IMAGE")
+    p_pet.add_argument(
+        "pet_args",
+        nargs="*",
+        help="add: NAME SPECIES DESCRIPTION  |  identify|describe: IMAGE",
+    )
 
     args = parser.parse_args()
 
@@ -150,6 +153,7 @@ def main():
 
     elif args.command == "pet":
         from .pets import add_pet, list_pets, identify_pet, describe
+
         a = args.pet_args
         if args.action == "list":
             rows = list_pets()
@@ -159,7 +163,9 @@ def main():
                 print(f"  {p['name']:20s} [{p['species']}] \u2014 {p['description']}")
         elif args.action == "add":
             if len(a) < 3:
-                print("Usage: sam-faces pet add NAME SPECIES DESCRIPTION", file=sys.stderr)
+                print(
+                    "Usage: sam-faces pet add NAME SPECIES DESCRIPTION", file=sys.stderr
+                )
                 sys.exit(1)
             add_pet(a[0], a[1], " ".join(a[2:]))
             print(f"Registered {a[0]}")
