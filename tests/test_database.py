@@ -110,9 +110,12 @@ def test_postgres_backend_roundtrip():
     """Round-trip against a real Postgres backend. Skipped unless SAM_FACES_TEST_PG is set
     to a DSN (e.g. postgresql://user@localhost/sam_faces_test)."""
     import os, sys, subprocess, pytest
+
     dsn = os.environ.get("SAM_FACES_TEST_PG")
     if not dsn:
-        pytest.skip("set SAM_FACES_TEST_PG=postgresql://... to exercise the Postgres backend")
+        pytest.skip(
+            "set SAM_FACES_TEST_PG=postgresql://... to exercise the Postgres backend"
+        )
     code = (
         "import numpy as np, sam_faces.database as db\n"
         "db.init_db()\n"
@@ -124,5 +127,7 @@ def test_postgres_backend_roundtrip():
         "print('ok')\n"
     )
     env = {**os.environ, "SAM_FACES_DB": dsn}
-    r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+    r = subprocess.run(
+        [sys.executable, "-c", code], env=env, capture_output=True, text=True
+    )
     assert r.returncode == 0 and "ok" in r.stdout, r.stderr

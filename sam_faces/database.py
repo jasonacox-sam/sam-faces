@@ -40,6 +40,7 @@ if IS_POSTGRES:
 
     def _bin(b: bytes):
         return psycopg2.Binary(b)
+
 else:
     import sqlite3
 
@@ -95,7 +96,9 @@ def init_db():
         if IS_POSTGRES:
             cur.execute("ALTER TABLE encodings ADD COLUMN IF NOT EXISTS crop_path TEXT")
         else:
-            cols = [r[1] for r in cur.execute("PRAGMA table_info(encodings)").fetchall()]
+            cols = [
+                r[1] for r in cur.execute("PRAGMA table_info(encodings)").fetchall()
+            ]
             if "crop_path" not in cols:
                 cur.execute("ALTER TABLE encodings ADD COLUMN crop_path TEXT")
 
@@ -138,14 +141,22 @@ def list_people() -> list[dict]:
         return [dict(r) for r in cur.fetchall()]
 
 
-def add_encoding(person_id: str, encoding: np.ndarray, note: str = "", crop_path: str = "") -> str:
+def add_encoding(
+    person_id: str, encoding: np.ndarray, note: str = "", crop_path: str = ""
+) -> str:
     eid = str(uuid.uuid4())[:12]
     with _cursor(commit=True) as cur:
         cur.execute(
             "INSERT INTO encodings (id, person_id, vector, note, added_at, crop_path) "
             f"VALUES ({_PH}, {_PH}, {_PH}, {_PH}, {_PH}, {_PH})",
-            (eid, person_id, _bin(vec_to_blob(encoding)), note,
-             datetime.now(timezone.utc).isoformat(), crop_path),
+            (
+                eid,
+                person_id,
+                _bin(vec_to_blob(encoding)),
+                note,
+                datetime.now(timezone.utc).isoformat(),
+                crop_path,
+            ),
         )
     return eid
 
@@ -161,7 +172,10 @@ def get_all_encodings() -> list[dict]:
 
 def update_crop_path(encoding_id: str, crop_path: str):
     with _cursor(commit=True) as cur:
-        cur.execute(f"UPDATE encodings SET crop_path={_PH} WHERE id={_PH}", (crop_path, encoding_id))
+        cur.execute(
+            f"UPDATE encodings SET crop_path={_PH} WHERE id={_PH}",
+            (crop_path, encoding_id),
+        )
 
 
 def add_unknown(image_path: str, face_crop_path: str = "") -> str:
